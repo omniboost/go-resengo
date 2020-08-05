@@ -1,35 +1,26 @@
-package sage_test
+package fortnox_test
 
 import (
 	"log"
 	"net/url"
 	"os"
-	"strconv"
 	"testing"
 
-	sage "github.com/omniboost/go-sageone-za"
+	fortnox "github.com/omniboost/go-fortnox"
 )
 
 var (
-	client    *sage.Client
+	client    *fortnox.Client
 	companyID int
 )
 
 func TestMain(m *testing.M) {
-	var err error
-
 	baseURLString := os.Getenv("BASE_URL")
-	user := os.Getenv("USER")
-	password := os.Getenv("PASSWORD")
-	apiKey := os.Getenv("API_KEY")
+	clientSecret := os.Getenv("CLIENT_SECRET")
+	accessToken := os.Getenv("ACCESS_TOKEN")
 	debug := os.Getenv("DEBUG")
-	id := os.Getenv("TEST_COMPANY_ID")
-	companyID, err = strconv.Atoi(id)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	client = sage.NewClient(nil, user, password, apiKey)
+	client = fortnox.NewClient(nil, clientSecret, accessToken)
 	if debug != "" {
 		client.SetDebug(true)
 	}

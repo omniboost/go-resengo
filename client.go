@@ -1,4 +1,4 @@
-package sage
+package fortnox
 
 import (
 	"bytes"
@@ -17,12 +17,12 @@ import (
 	"text/template"
 
 	ntlmssp "github.com/Azure/go-ntlmssp"
-	"github.com/omniboost/go-sageone-za/utils"
+	"github.com/omniboost/go-fortnox/utils"
 )
 
 const (
 	libraryVersion = "0.0.1"
-	userAgent      = "go-sageone-za/" + libraryVersion
+	userAgent      = "go-fortnox/" + libraryVersion
 	mediaType      = "application/json"
 	charset        = "utf-8"
 )
@@ -30,8 +30,8 @@ const (
 var (
 	BaseURL = url.URL{
 		Scheme: "https",
-		Host:   "accounting.sageone.co.za",
-		Path:   "/api/2.0.0/",
+		Host:   "api.fortnox.se",
+		Path:   "/3",
 	}
 )
 

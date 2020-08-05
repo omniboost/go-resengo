@@ -1,11 +1,10 @@
-package sage
+package fortnox
 
 import (
 	"net/http"
 	"net/url"
 
-	"github.com/omniboost/go-sageone-za/odata"
-	"github.com/omniboost/go-sageone-za/utils"
+	"github.com/omniboost/go-fortnox/utils"
 )
 
 func (c *Client) NewGetAccountsRequest() GetAccountsRequest {
@@ -32,7 +31,7 @@ type GetAccountsRequest struct {
 
 func (r GetAccountsRequest) NewGetAccountsQueryParams() *GetAccountsQueryParams {
 	return &GetAccountsQueryParams{
-		Pagination: odata.NewPagination(),
+		// Pagination: odata.NewPagination(),
 	}
 }
 

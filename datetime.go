@@ -1,4 +1,4 @@
-package sage
+package fortnox
 
 import (
 	"encoding/json"

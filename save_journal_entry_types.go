@@ -1,4 +1,4 @@
-package sage
+package fortnox
 
 type NewJournalEntry struct {
 	ID                  int     `json:"ID"`

@@ -1,4 +1,4 @@
-package sage_test
+package fortnox_test
 
 import (
 	"encoding/json"

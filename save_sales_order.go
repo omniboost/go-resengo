@@ -1,10 +1,10 @@
-package sage
+package fortnox
 
 import (
 	"net/http"
 	"net/url"
 
-	"github.com/omniboost/go-sageone-za/utils"
+	"github.com/omniboost/go-fortnox/utils"
 )
 
 func (c *Client) NewSaveSalesOrderRequest() SaveSalesOrderRequest {
