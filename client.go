@@ -36,7 +36,7 @@ var (
 )
 
 // NewClient returns a new Exact Globe Client client
-func NewClient(httpClient *http.Client, user, password, apiKey string) *Client {
+func NewClient(httpClient *http.Client, clientSecret string, accessToken string) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
@@ -44,9 +44,8 @@ func NewClient(httpClient *http.Client, user, password, apiKey string) *Client {
 	client := &Client{}
 
 	client.SetHTTPClient(httpClient)
-	client.SetUser(user)
-	client.SetPassword(password)
-	client.SetAPIKey(apiKey)
+	client.SetClientSecret(clientSecret)
+	client.SetAccessToken(accessToken)
 	client.SetBaseURL(BaseURL)
 	client.SetDebug(false)
 	client.SetUserAgent(userAgent)
@@ -65,9 +64,8 @@ type Client struct {
 	baseURL url.URL
 
 	// credentials
-	user     string
-	password string
-	apiKey   string
+	clientSecret string
+	accessToken  string
 
 	// User agent for client
 	userAgent string
@@ -100,28 +98,20 @@ func (c *Client) SetDebug(debug bool) {
 	c.debug = debug
 }
 
-func (c Client) User() string {
-	return c.user
+func (c Client) ClientSecret() string {
+	return c.clientSecret
 }
 
-func (c *Client) SetUser(user string) {
-	c.user = user
+func (c *Client) SetClientSecret(clientSecret string) {
+	c.clientSecret = clientSecret
 }
 
-func (c Client) Password() string {
-	return c.password
+func (c Client) AccessToken() string {
+	return c.accessToken
 }
 
-func (c *Client) SetPassword(password string) {
-	c.password = password
-}
-
-func (c Client) APIKey() string {
-	return c.apiKey
-}
-
-func (c *Client) SetAPIKey(apiKey string) {
-	c.apiKey = apiKey
+func (c *Client) SetAccessToken(accessToken string) {
+	c.accessToken = accessToken
 }
 
 func (c Client) BaseURL() url.URL {
@@ -197,8 +187,6 @@ func (c *Client) NewRequest(ctx context.Context, method string, URL url.URL, bod
 	}
 
 	values := url.Values{}
-	values.Add("ApiKey", c.APIKey())
-
 	err = utils.AddURLValuesToRequest(values, req, true)
 	if err != nil {
 		return nil, err
@@ -213,6 +201,8 @@ func (c *Client) NewRequest(ctx context.Context, method string, URL url.URL, bod
 	req.Header.Add("Content-Type", fmt.Sprintf("%s; charset=%s", c.MediaType(), c.Charset()))
 	req.Header.Add("Accept", c.MediaType())
 	req.Header.Add("User-Agent", c.UserAgent())
+	req.Header.Add("Client-Secret", c.ClientSecret())
+	req.Header.Add("Access-Token", c.AccessToken())
 
 	return req, nil
 }
@@ -221,8 +211,6 @@ func (c *Client) NewRequest(ctx context.Context, method string, URL url.URL, bod
 // pointed to by v, or returned as an error if an Client error has occurred. If v implements the io.Writer interface,
 // the raw response will be written to v, without attempting to decode it.
 func (c *Client) Do(req *http.Request, responseBody interface{}) (*http.Response, error) {
-	req.SetBasicAuth(c.user, c.password)
-
 	if c.debug == true {
 		dump, _ := httputil.DumpRequestOut(req, true)
 		log.Println(string(dump))

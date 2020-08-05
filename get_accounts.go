@@ -36,8 +36,6 @@ func (r GetAccountsRequest) NewGetAccountsQueryParams() *GetAccountsQueryParams 
 }
 
 type GetAccountsQueryParams struct {
-	odata.Pagination
-	CompanyID int `schema:"CompanyId"`
 }
 
 func (p GetAccountsQueryParams) ToURLValues() (url.Values, error) {
@@ -98,13 +96,12 @@ func (r *GetAccountsRequest) NewResponseBody() *GetAccountsResponseBody {
 }
 
 type GetAccountsResponseBody struct {
-	TotalResults    int `json:"TotalResults"`
-	ReturnedResults int `json:"ReturnedResults"`
-	Results         Accounts
+	MetaInformation `json:"MetaInformation"`
+	Accounts        Accounts
 }
 
 func (r *GetAccountsRequest) URL() url.URL {
-	return r.client.GetEndpointURL("/Account/Get", r.PathParams())
+	return r.client.GetEndpointURL("/accounts", r.PathParams())
 }
 
 func (r *GetAccountsRequest) Do() (GetAccountsResponseBody, error) {
@@ -128,37 +125,16 @@ func (r *GetAccountsRequest) Do() (GetAccountsResponseBody, error) {
 type Accounts []Account
 
 type Account struct {
-	Name     string `json:"Name"`
-	Category struct {
-		Comment     string `json:"Comment"`
-		Order       int    `json:"Order"`
-		Description string `json:"Description"`
-		ID          int    `json:"ID"`
-		Modified    string `json:"Modified"`
-		Created     string `json:"Created"`
-	} `json:"Category"`
-	Active             bool    `json:"Active"`
-	Balance            float64 `json:"Balance"`
-	Description        string  `json:"Description"`
-	ReportingGroupID   int     `json:"ReportingGroupId"`
-	UnallocatedAccount bool    `json:"UnallocatedAccount"`
-	IsTaxLocked        bool    `json:"IsTaxLocked"`
-	Modified           string  `json:"Modified"`
-	Created            string  `json:"Created"`
-	AccountType        int     `json:"AccountType"`
-	HasActivity        bool    `json:"HasActivity"`
-	DefaultTaxTypeID   int     `json:"DefaultTaxTypeId"`
-	DefaultTaxType     struct {
-		ID                int     `json:"ID"`
-		Name              string  `json:"Name"`
-		Percentage        float64 `json:"Percentage"`
-		IsDefault         bool    `json:"IsDefault"`
-		HasActivity       bool    `json:"HasActivity"`
-		IsManualTax       bool    `json:"IsManualTax"`
-		Active            bool    `json:"Active"`
-		Created           string  `json:"Created"`
-		Modified          string  `json:"Modified"`
-		TaxTypeDefaultUID string  `json:"TaxTypeDefaultUID"`
-	} `json:"DefaultTaxType"`
-	ID int `json:"ID"`
+	URL                   utils.URL `json:"@url"`
+	Active                bool      `json:"active"`
+	BalanceBroughtForward float64   `json:"BalanceBroughtForward"`
+	CostCenter            string    `json:"CostCenter"`
+	CostCentersettings    string    `json:"CostCentersettings"`
+	Description           string    `json:"Description"`
+	Number                int       `json:"Number"`
+	Project               string    `json:"Project"`
+	ProjectSettings       string    `json:"ProjectSettings"`
+	SRU                   int       `json:"SRU"`
+	Year                  int       `json:"Year"`
+	VATCode               string    `json:"VATCode"`
 }
