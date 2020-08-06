@@ -5,7 +5,7 @@ import "github.com/omniboost/go-fortnox/utils"
 type Accounts []Account
 
 type Account struct {
-	URL                   utils.URL `json:"@url"`
+	URL                   utils.URL `json:"@url"` // Direct url to the record.
 	Active                bool      `json:"active"`
 	BalanceBroughtForward float64   `json:"BalanceBroughtForward"`
 	CostCenter            string    `json:"CostCenter"`
