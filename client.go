@@ -358,11 +358,7 @@ func CheckResponse(r *http.Response) error {
 
 	err = checkContentType(r)
 	if err != nil {
-		if string(data) != "" {
-			errorResponse.Errors = append(errorResponse.Errors, errors.New(string(data)))
-		} else {
-			errorResponse.Errors = append(errorResponse.Errors, errors.New(r.Status))
-		}
+		errorResponse.ErrorInformation = err
 		return errorResponse
 	}
 
@@ -371,11 +367,15 @@ func CheckResponse(r *http.Response) error {
 	}
 
 	// convert json to struct
-	err = json.Unmarshal(data, errorResponse)
+	dest := struct {
+		ErrorInformation ErrorInformation
+	}{}
+	err = json.Unmarshal(data, &dest)
 	if err != nil {
-		errorResponse.Errors = append(errorResponse.Errors, err)
+		errorResponse.ErrorInformation = err
 		return errorResponse
 	}
+	errorResponse.ErrorInformation = dest.ErrorInformation
 
 	return errorResponse
 }
@@ -384,40 +384,24 @@ type ErrorResponse struct {
 	// HTTP response that caused this error
 	Response *http.Response `json:"-"`
 
-	Errors []error
-}
-
-type Error struct {
-	Message       string `json:"message"`
-	MessageDetail string `json:"MessageDetail"`
-}
-
-func (e Error) Error() string {
-	return fmt.Sprintf("%s: %s", e.Message, e.MessageDetail)
-}
-
-func (r *ErrorResponse) UnmarshalJSON(data []byte) error {
-	e := Error{}
-	err := json.Unmarshal(data, &e)
-	if err != nil {
-		return err
-	}
-
-	r.Errors = append(r.Errors, e)
-
-	return nil
+	ErrorInformation error `json:"ErrorInformation"`
 }
 
 func (r ErrorResponse) Error() string {
-	if len(r.Errors) > 0 {
-		str := []string{}
-		for _, err := range r.Errors {
-			str = append(str, err.Error())
-		}
-		return strings.Join(str, ", ")
+	if r.ErrorInformation == nil {
+		return ""
 	}
+	return r.ErrorInformation.Error()
+}
 
-	return r.Errors[0].Error()
+type ErrorInformation struct {
+	Err     int    `json:"error"`
+	Message string `json:"message"`
+	Code    int    `json:"code"`
+}
+
+func (e ErrorInformation) Error() string {
+	return fmt.Sprintf("%d: %s", e.Code, e.Message)
 }
 
 func checkContentType(response *http.Response) error {
