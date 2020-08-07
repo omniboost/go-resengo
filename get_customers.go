@@ -36,6 +36,9 @@ func (r GetCustomersRequest) NewGetCustomersQueryParams() *GetCustomersQueryPara
 }
 
 type GetCustomersQueryParams struct {
+	CustomerNumber string `schema:"customernumber"`
+	Name           string `schema:"name"`
+	Email          string `schema:"email"`
 }
 
 func (p GetCustomersQueryParams) ToURLValues() (url.Values, error) {
