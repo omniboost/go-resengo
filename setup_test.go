@@ -1,36 +1,31 @@
-package fortnox_test
+package resengo_test
 
 import (
 	"log"
-	"net/url"
 	"os"
+	"strconv"
 	"testing"
 
-	fortnox "github.com/omniboost/go-fortnox"
+	resengo "github.com/omniboost/go-resengo"
 )
 
 var (
-	client    *fortnox.Client
+	client    *resengo.Client
 	companyID int
 )
 
 func TestMain(m *testing.M) {
-	baseURLString := os.Getenv("BASE_URL")
+	companyID, err := strconv.Atoi(os.Getenv("COMPANY_ID"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	clientID := os.Getenv("CLIENT_ID")
 	clientSecret := os.Getenv("CLIENT_SECRET")
-	accessToken := os.Getenv("ACCESS_TOKEN")
 	debug := os.Getenv("DEBUG")
 
-	client = fortnox.NewClient(nil, clientSecret, accessToken)
+	client = resengo.NewClient(nil, companyID, clientID, clientSecret)
 	if debug != "" {
 		client.SetDebug(true)
 	}
-	if baseURLString != "" {
-		baseURL, err := url.Parse(baseURLString)
-		if err != nil {
-			log.Fatal(err)
-		}
-		client.SetBaseURL(*baseURL)
-	}
-	client.SetDisallowUnknownFields(true)
 	m.Run()
 }

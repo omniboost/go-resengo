@@ -1,4 +1,4 @@
-package fortnox
+package resengo
 
 type MetaInformation struct {
 	TotalResources int `json:"@TotalResources"`

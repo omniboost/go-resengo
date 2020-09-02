@@ -1,4 +1,4 @@
-package fortnox
+package resengo
 
 import (
 	"bytes"
@@ -12,16 +12,18 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"text/template"
 
-	"github.com/omniboost/go-fortnox/utils"
+	"github.com/omniboost/go-resengo/utils"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
 	libraryVersion = "0.0.1"
-	userAgent      = "go-fortnox/" + libraryVersion
+	userAgent      = "go-resengo/" + libraryVersion
 	mediaType      = "application/json"
 	charset        = "utf-8"
 )
@@ -29,27 +31,28 @@ const (
 var (
 	BaseURL = url.URL{
 		Scheme: "https",
-		Host:   "api.fortnox.se",
-		Path:   "/3",
+		Host:   "{{.api}}.resengo.com",
+		Path:   "",
 	}
 )
 
 // NewClient returns a new Exact Globe Client client
-func NewClient(httpClient *http.Client, clientSecret string, accessToken string) *Client {
-	if httpClient == nil {
-		httpClient = http.DefaultClient
-	}
-
+func NewClient(httpClient *http.Client, companyID int, clientID string, clientSecret string) *Client {
 	client := &Client{}
 
-	client.SetHTTPClient(httpClient)
+	client.SetCompanyID(companyID)
+	client.SetClientID(clientID)
 	client.SetClientSecret(clientSecret)
-	client.SetAccessToken(accessToken)
 	client.SetBaseURL(BaseURL)
 	client.SetDebug(false)
 	client.SetUserAgent(userAgent)
 	client.SetMediaType(mediaType)
 	client.SetCharset(charset)
+
+	if httpClient == nil {
+		httpClient = client.DefaultClient()
+	}
+	client.SetHTTPClient(httpClient)
 
 	return client
 }
@@ -63,8 +66,9 @@ type Client struct {
 	baseURL url.URL
 
 	// credentials
+	companyID    int
+	clientID     string
 	clientSecret string
-	accessToken  string
 
 	// User agent for client
 	userAgent string
@@ -80,6 +84,28 @@ type Client struct {
 // RequestCompletionCallback defines the type of the request callback function
 type RequestCompletionCallback func(*http.Request, *http.Response)
 
+func (c *Client) DefaultClient() *http.Client {
+	u := c.GetEndpointURL("connect/token", AccessTokenPathParams{})
+	u.Host = strings.Replace(u.Host, "{{.api}}", "login", -1)
+
+	config := &clientcredentials.Config{
+		ClientID:     c.ClientID(),
+		ClientSecret: c.ClientSecret(),
+		Scopes:       c.Scopes(),
+		TokenURL:     u.String(),
+	}
+	return config.Client(context.Background())
+}
+
+func (c *Client) Scopes() []string {
+	return []string{
+		"ReservationApi_Client",
+		// "FeedbackApi_Client",
+		// "PersonApi_Client",
+		// "Availability_Client",
+	}
+}
+
 func (c *Client) SetHTTPClient(client *http.Client) {
 	c.http = client
 }
@@ -92,20 +118,28 @@ func (c *Client) SetDebug(debug bool) {
 	c.debug = debug
 }
 
+func (c Client) CompanyID() int {
+	return c.companyID
+}
+
+func (c *Client) SetCompanyID(companyID int) {
+	c.companyID = companyID
+}
+
+func (c Client) ClientID() string {
+	return c.clientID
+}
+
+func (c *Client) SetClientID(ClientID string) {
+	c.clientID = ClientID
+}
+
 func (c Client) ClientSecret() string {
 	return c.clientSecret
 }
 
-func (c *Client) SetClientSecret(clientSecret string) {
-	c.clientSecret = clientSecret
-}
-
-func (c Client) AccessToken() string {
-	return c.accessToken
-}
-
-func (c *Client) SetAccessToken(accessToken string) {
-	c.accessToken = accessToken
+func (c *Client) SetClientSecret(ClientSecret string) {
+	c.clientSecret = ClientSecret
 }
 
 func (c Client) BaseURL() url.URL {
@@ -155,6 +189,7 @@ func (c *Client) GetEndpointURL(path string, pathParams PathParams) url.URL {
 
 	buf := new(bytes.Buffer)
 	params := pathParams.Params()
+	params["company_id"] = strconv.Itoa(c.CompanyID())
 	err = tmpl.Execute(buf, params)
 	if err != nil {
 		log.Fatal(err)
@@ -195,8 +230,6 @@ func (c *Client) NewRequest(ctx context.Context, method string, URL url.URL, bod
 	req.Header.Add("Content-Type", fmt.Sprintf("%s; charset=%s", c.MediaType(), c.Charset()))
 	req.Header.Add("Accept", c.MediaType())
 	req.Header.Add("User-Agent", c.UserAgent())
-	req.Header.Add("Client-Secret", c.ClientSecret())
-	req.Header.Add("Access-Token", c.AccessToken())
 
 	return req, nil
 }
@@ -410,4 +443,10 @@ func checkContentType(response *http.Response) error {
 
 type PathParams interface {
 	Params() map[string]string
+}
+
+type AccessTokenPathParams struct{}
+
+func (pp AccessTokenPathParams) Params() map[string]string {
+	return map[string]string{}
 }

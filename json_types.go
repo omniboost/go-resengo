@@ -1,4 +1,4 @@
-package fortnox
+package resengo
 
 import (
 	"encoding/json"
