@@ -1,5 +1,9 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
+github.com/hashicorp/errwrap v1.0.0 h1:hLrqtEDnRye3+sgx6z4qVLNuviH3MR5aQ0ykNJa/UYA=
+github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
+github.com/hashicorp/go-multierror v1.1.0 h1:B9UzwGQJehnUY1yNrnwREHc3fGbC2xefo8g4TbElacI=
+github.com/hashicorp/go-multierror v1.1.0/go.mod h1:spPvp8C1qA32ftKqdAHm4hHTbPw+vmowP0z+KUhOZdA=
 github.com/omniboost/go-fortnox v0.0.0-20200807110736-7d09acbf0636 h1:y6cytu/9i8dR+VMBk1/FL62YEqhrZ2Ym3yqi3E9n3jI=
 github.com/omniboost/go-fortnox v0.0.0-20200807110736-7d09acbf0636/go.mod h1:8ZAeR4FQfV1U5IKHmS3qyz99lRzU1DzriTnqFr2Hj1s=
 github.com/omniboost/schema v1.1.1-0.20191030093734-a170fe1a7240 h1:+yAcEWiT5FCKmD9HmerCkxSXRO/9uVQ88gQwvJbt6LA=

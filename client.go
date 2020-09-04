@@ -17,6 +17,7 @@ import (
 	"sync"
 	"text/template"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/omniboost/go-resengo/utils"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -276,7 +277,11 @@ func (c *Client) Do(req *http.Request, responseBody interface{}) (*http.Response
 	}
 
 	if responseBody == nil {
-		return httpResp, err
+		return httpResp, nil
+	}
+
+	if httpResp.ContentLength == 0 {
+		return httpResp, nil
 	}
 
 	// interface implements io.Writer: write Body to it
@@ -385,7 +390,7 @@ func CheckResponse(r *http.Response) error {
 
 	err = checkContentType(r)
 	if err != nil {
-		errorResponse.ErrorInformation = err
+		errorResponse.Errors = err
 		return errorResponse
 	}
 
@@ -395,14 +400,14 @@ func CheckResponse(r *http.Response) error {
 
 	// convert json to struct
 	dest := struct {
-		ErrorInformation ErrorInformation
+		Errors Errors
 	}{}
 	err = json.Unmarshal(data, &dest)
 	if err != nil {
-		errorResponse.ErrorInformation = err
+		errorResponse.Errors = err
 		return errorResponse
 	}
-	errorResponse.ErrorInformation = dest.ErrorInformation
+	errorResponse.Errors = dest.Errors
 
 	return errorResponse
 }
@@ -411,30 +416,48 @@ type ErrorResponse struct {
 	// HTTP response that caused this error
 	Response *http.Response `json:"-"`
 
-	ErrorInformation error `json:"ErrorInformation"`
+	Errors  error  `json:"errors"`
+	Type    string `json:"type"`
+	Title   string `json:"title"`
+	Status  int    `json:"status"`
+	TraceID string `json:"traceId"`
 }
 
 func (r ErrorResponse) Error() string {
-	if r.ErrorInformation == nil {
+	if r.Errors == nil {
 		return ""
 	}
-	return r.ErrorInformation.Error()
+	return r.Errors.Error()
 }
 
-type ErrorInformation struct {
-	Err     int    `json:"error"`
-	Message string `json:"message"`
-	Code    int    `json:"code"`
+type Errors struct {
+	SMSReceptionStatus   []string `json:"smsReceptionStatus"`
+	CommunicationStatus  []string `json:"communicationStatus"`
+	EmailReceptionStatus []string `json:"emailReceptionStatus"`
 }
 
-func (e ErrorInformation) Error() string {
-	return fmt.Sprintf("%d: %s", e.Code, e.Message)
+func (e Errors) Error() string {
+	var errs *multierror.Error
+
+	for _, e := range e.SMSReceptionStatus {
+		errs = multierror.Append(errs, errors.New(e))
+	}
+
+	for _, e := range e.CommunicationStatus {
+		errs = multierror.Append(errs, errors.New(e))
+	}
+
+	for _, e := range e.EmailReceptionStatus {
+		errs = multierror.Append(errs, errors.New(e))
+	}
+
+	return errs.Error()
 }
 
 func checkContentType(response *http.Response) error {
 	header := response.Header.Get("Content-Type")
 	contentType := strings.Split(header, ";")[0]
-	if contentType != mediaType {
+	if contentType != mediaType && contentType != "application/problem+json" {
 		return fmt.Errorf("Expected Content-Type \"%s\", got \"%s\"", mediaType, contentType)
 	}
 

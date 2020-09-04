@@ -6,7 +6,7 @@ type EventReservations []EventReservation
 
 type EventReservation struct {
 	ID                          int           `json:"id"`
-	CompanyID                   int           `json:"companyId"`
+	CompanyID                   int           `json:"companyId,omitempty"`
 	TimeZone                    string        `json:"timeZone"`
 	StartTimeLocal              LocalTime     `json:"startTimeLocal"`
 	EventCategoryID             int           `json:"eventCategoryId"`
@@ -25,7 +25,7 @@ type EventReservation struct {
 	ExternalReservationID       string        `json:"externalReservationId"`
 	CommunicationStatus         string        `json:"communicationStatus"`
 	EmailReceptionStatus        string        `json:"emailReceptionStatus"`
-	SmsReceptionStatus          string        `json:"smsReceptionStatus"`
+	SMSReceptionStatus          string        `json:"smsReceptionStatus"`
 	InsertDateUtc               time.Time     `json:"insertDateUtc"`
 	UpdateDateUtc               time.Time     `json:"updateDateUtc"`
 	GuestSummary                GuestSummary  `json:"guestSummary"`
