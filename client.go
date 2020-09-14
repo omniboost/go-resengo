@@ -10,11 +10,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 	"text/template"
 
 	"github.com/hashicorp/go-multierror"
@@ -239,10 +237,10 @@ func (c *Client) NewRequest(ctx context.Context, method string, URL url.URL, bod
 // pointed to by v, or returned as an error if an Client error has occurred. If v implements the io.Writer interface,
 // the raw response will be written to v, without attempting to decode it.
 func (c *Client) Do(req *http.Request, responseBody interface{}) (*http.Response, error) {
-	if c.debug == true {
-		dump, _ := httputil.DumpRequestOut(req, true)
-		log.Println(string(dump))
-	}
+	// if c.debug == true {
+	// 	dump, _ := httputil.DumpRequestOut(req, true)
+	// 	log.Println(string(dump))
+	// }
 
 	httpResp, err := c.http.Do(req)
 	if err != nil {
@@ -260,16 +258,16 @@ func (c *Client) Do(req *http.Request, responseBody interface{}) (*http.Response
 		}
 	}()
 
-	if c.debug == true {
-		dump, _ := httputil.DumpResponse(httpResp, true)
-		log.Println(string(dump))
-	}
+	// if c.debug == true {
+	// 	dump, _ := httputil.DumpResponse(httpResp, true)
+	// 	log.Println(string(dump))
+	// }
 
 	// check if the response isn't an error
-	err = CheckResponse(httpResp)
-	if err != nil {
-		return httpResp, err
-	}
+	// err = CheckResponse(httpResp)
+	// if err != nil {
+	// 	return httpResp, err
+	// }
 
 	// check the provided interface parameter
 	if httpResp == nil {
@@ -295,14 +293,23 @@ func (c *Client) Do(req *http.Request, responseBody interface{}) (*http.Response
 		return httpResp, nil
 	}
 
-	err = c.Unmarshal(httpResp.Body, &responseBody)
+	errResp1 := struct {
+		Errors Errors
+	}{}
+	errResp2 := ""
+
+	err = c.Unmarshal(httpResp.Body, &responseBody, &errResp1, &errResp2)
 	if err != nil {
 		return httpResp, err
 	}
 
-	// if len(errorResponse.Messages) > 0 {
-	// 	return httpResp, errorResponse
-	// }
+	if errResp1.Errors.Error() != "" {
+		return httpResp, errResp1.Errors
+	}
+
+	if errResp2 != "" {
+		return httpResp, errors.New(errResp2)
+	}
 
 	return httpResp, nil
 }
@@ -312,46 +319,26 @@ func (c *Client) Unmarshal(r io.Reader, vv ...interface{}) error {
 		return nil
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(len(vv))
-	errs := []error{}
-	writers := make([]io.Writer, len(vv))
-
-	for i, v := range vv {
-		pr, pw := io.Pipe()
-		writers[i] = pw
-
-		go func(i int, v interface{}, pr *io.PipeReader, pw *io.PipeWriter) {
-			dec := json.NewDecoder(pr)
-			if c.disallowUnknownFields {
-				dec.DisallowUnknownFields()
-			}
-
-			err := dec.Decode(v)
-			if err != nil {
-				errs = append(errs, err)
-			}
-
-			// mark routine as done
-			wg.Done()
-
-			// Drain reader
-			io.Copy(ioutil.Discard, pr)
-
-			// close reader
-			// pr.CloseWithError(err)
-			pr.Close()
-		}(i, v, pr, pw)
-	}
-
-	// copy the data in a multiwriter
-	mw := io.MultiWriter(writers...)
-	_, err := io.Copy(mw, r)
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
 
-	wg.Wait()
+	errs := []error{}
+	for _, v := range vv {
+		r := bytes.NewReader(b)
+		dec := json.NewDecoder(r)
+		if c.disallowUnknownFields {
+			dec.DisallowUnknownFields()
+		}
+
+		err := dec.Decode(v)
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+	}
+
 	if len(errs) == len(vv) {
 		// Everything errored
 		msgs := make([]string, len(errs))
@@ -360,6 +347,7 @@ func (c *Client) Unmarshal(r io.Reader, vv ...interface{}) error {
 		}
 		return errors.New(strings.Join(msgs, ", "))
 	}
+
 	return nil
 }
 
@@ -395,21 +383,11 @@ func CheckResponse(r *http.Response) error {
 	}
 
 	if len(data) == 0 {
+		errorResponse.Errors = errors.New("response body is empty")
 		return errorResponse
 	}
 
-	// convert json to struct
-	dest := struct {
-		Errors Errors
-	}{}
-	err = json.Unmarshal(data, &dest)
-	if err != nil {
-		errorResponse.Errors = err
-		return errorResponse
-	}
-	errorResponse.Errors = dest.Errors
-
-	return errorResponse
+	return nil
 }
 
 type ErrorResponse struct {
@@ -449,6 +427,10 @@ func (e Errors) Error() string {
 
 	for _, e := range e.EmailReceptionStatus {
 		errs = multierror.Append(errs, errors.New(e))
+	}
+
+	if errs == nil {
+		return ""
 	}
 
 	return errs.Error()
