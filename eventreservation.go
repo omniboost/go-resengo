@@ -38,7 +38,7 @@ type EventReservation struct {
 }
 
 type GuestSummary struct {
-	PersonID    int    `json:"personId"`
+	PersonID    int    `json:"personId,omitempty"`
 	GuestName   string `json:"guestName"`
 	PhoneNumber string `json:"phoneNumber"`
 	NoVisits    int    `json:"noVisits"`

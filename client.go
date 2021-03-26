@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
@@ -237,10 +238,10 @@ func (c *Client) NewRequest(ctx context.Context, method string, URL url.URL, bod
 // pointed to by v, or returned as an error if an Client error has occurred. If v implements the io.Writer interface,
 // the raw response will be written to v, without attempting to decode it.
 func (c *Client) Do(req *http.Request, responseBody interface{}) (*http.Response, error) {
-	// if c.debug == true {
-	// 	dump, _ := httputil.DumpRequestOut(req, true)
-	// 	log.Println(string(dump))
-	// }
+	if c.debug == true {
+		dump, _ := httputil.DumpRequestOut(req, true)
+		log.Println(string(dump))
+	}
 
 	httpResp, err := c.http.Do(req)
 	if err != nil {
@@ -258,16 +259,16 @@ func (c *Client) Do(req *http.Request, responseBody interface{}) (*http.Response
 		}
 	}()
 
-	// if c.debug == true {
-	// 	dump, _ := httputil.DumpResponse(httpResp, true)
-	// 	log.Println(string(dump))
-	// }
+	if c.debug == true {
+		dump, _ := httputil.DumpResponse(httpResp, true)
+		log.Println(string(dump))
+	}
 
 	// check if the response isn't an error
-	// err = CheckResponse(httpResp)
-	// if err != nil {
-	// 	return httpResp, err
-	// }
+	err = CheckResponse(httpResp)
+	if err != nil {
+		return httpResp, err
+	}
 
 	// check the provided interface parameter
 	if httpResp == nil {

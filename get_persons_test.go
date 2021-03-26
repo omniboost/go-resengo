@@ -6,9 +6,10 @@ import (
 	"testing"
 )
 
-func TestDeleteEventReservations(t *testing.T) {
-	req := client.NewDeleteEventReservationsRequest()
-	req.PathParams().EventReservationID = 43182263
+func TestGetPersons(t *testing.T) {
+	req := client.NewGetPersonsRequest()
+	req.QueryParams().PageSize = 50
+	req.QueryParams().Page = 1
 	resp, err := req.Do()
 	if err != nil {
 		t.Error(err)
